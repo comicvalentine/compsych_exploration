@@ -1,0 +1,18 @@
+{
+    "n_divergent": 13,
+    "max_rhat": 1.013,
+    "bad_rhat": {
+        "gamma": {
+            "list": [
+                {
+                    "index": [
+                        0,
+                        69
+                    ],
+                    "rhat": 1.013
+                }
+            ],
+            "count": 1
+        }
+    }
+}

@@ -1,0 +1,62 @@
+{
+    "n_divergent": 0,
+    "max_rhat": 1.0141,
+    "bad_rhat": {
+        "mu_p": {
+            "list": [
+                {
+                    "index": [
+                        1,
+                        1
+                    ],
+                    "rhat": 1.0141
+                }
+            ],
+            "count": 1
+        },
+        "eta_raw": {
+            "list": [
+                {
+                    "index": [
+                        1,
+                        10
+                    ],
+                    "rhat": 1.0117
+                },
+                {
+                    "index": [
+                        1,
+                        18
+                    ],
+                    "rhat": 1.0111
+                },
+                {
+                    "index": [
+                        1,
+                        43
+                    ],
+                    "rhat": 1.0111
+                },
+                {
+                    "index": [
+                        1,
+                        54
+                    ],
+                    "rhat": 1.0114
+                }
+            ],
+            "count": 4
+        },
+        "mu_eta": {
+            "list": [
+                {
+                    "index": [
+                        1
+                    ],
+                    "rhat": 1.0141
+                }
+            ],
+            "count": 1
+        }
+    }
+}

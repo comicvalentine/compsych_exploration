@@ -1,0 +1,50 @@
+{
+    "n_divergent": 3,
+    "max_rhat": 1.0195,
+    "bad_rhat": {
+        "mu_Q_0": {
+            "rhat": 1.0167
+        },
+        "mu_p": {
+            "list": [
+                {
+                    "index": [
+                        0,
+                        2
+                    ],
+                    "rhat": 1.0195
+                },
+                {
+                    "index": [
+                        1,
+                        1
+                    ],
+                    "rhat": 1.0141
+                }
+            ],
+            "count": 2
+        },
+        "mu_beta": {
+            "list": [
+                {
+                    "index": [
+                        1
+                    ],
+                    "rhat": 1.0141
+                }
+            ],
+            "count": 1
+        },
+        "mu_eta": {
+            "list": [
+                {
+                    "index": [
+                        0
+                    ],
+                    "rhat": 1.0195
+                }
+            ],
+            "count": 1
+        }
+    }
+}
