@@ -36,10 +36,9 @@ data {
 
 }
 
-// A-matrix for thompson sampling
 transformed data {
 
-   vector[3] tau_S;
+   vector[3] tau_S; //sampling precision
    tau_S = rep_vector(inv_square(0.8), 3);
 
 }
@@ -54,12 +53,12 @@ parameters{
     array[nH] vector[2] mu_p; //[prior uncertainty, novelty bonus, value-free random]
     array[nH] vector<lower=0>[2] sigma;  //[prior uncertainty, novelty bonus, value-free random]
 
-    // Individual parameters (Non-centered)
-    // array[nS] real Q_0_raw; //prior mean
+    // Individual parameters
     array[nS] real<lower=1, upper=10> Q_0; //prior mean
 
+    // (Non-centered)
     array[nH, nS] real sigma_0_raw; //prior uncertainty
-   
+    
     array[nH, nS] real epsilon_raw; //value-free random exploration
 
 }
@@ -70,10 +69,6 @@ transformed parameters{
     array[nH, nS] real sigma_0; //prior uncertainty
     
     array[nH, nS] real epsilon; //value-free random exploration
-    
-    // for (s_idx in 1:nS) {
-    //     Q_0[s_idx] = mu_Q_0 + sigma_Q_0 * Q_0_raw[s_idx];
-    // }
 
     for (h_idx in 1:nH){
         for (s_idx in 1:nS){
@@ -120,7 +115,7 @@ model{
                 
                 //compute Q and sigma at the first choice trial using closed-form kalman filter
                 tau_n = tau_0 + n_obs[h_idx, s_idx, bt_idx] .* tau_S;
-                Q_n = (tau_0.*Q_0[s_idx] + tau_S.* r_sum[h_idx, s_idx, bt_idx])./(tau_0 + tau_S.* n_obs[h_idx, s_idx, bt_idx]);
+                Q_n = (tau_0.*Q_0[s_idx] + tau_S.* r_sum[h_idx, s_idx, bt_idx])./tau_n;
                 sigma_n = inv_sqrt(tau_n);
                 
                 //compute V (without novelty bonus, it is equal to Q)
@@ -202,14 +197,14 @@ generated quantities{
                 
                 //compute Q and sigma at the first choice trial using closed-form kalman filter
                 tau_n = tau_0 + n_obs[h_idx, s_idx, bt_idx] .* tau_S;
-                Q_n = (tau_0.*Q_0[s_idx] + tau_S.* r_sum[h_idx, s_idx, bt_idx])./(tau_0 + tau_S.* n_obs[h_idx, s_idx, bt_idx]);
+                Q_n = (tau_0.*Q_0[s_idx] + tau_S.* r_sum[h_idx, s_idx, bt_idx])./tau_n;
                 sigma_n = inv_sqrt(tau_n);
                 
                 //compute V
                 V_n = Q_n;
 
                 // Thompson sampling
-                // Although the original code from Dubois & Hauser (2022) used "A matrix", repeating matrix computation for all bandit makes HMC really slow.
+                // Although the original code from Dubois & Hauser (2022) used "A matrix", repeating matrix computation for all bandit may make HMC slow.
                 // Instead, manually compute choice probability for each bandit
                 vector[3] sq_sigma = square(sigma_n);
 

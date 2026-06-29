@@ -36,7 +36,6 @@ data {
 
 }
 
-// A-matrix for thompson sampling
 transformed data {
 
    vector[3] tau_S;
@@ -54,10 +53,10 @@ parameters{
     array[nH] vector[1] mu_p; //[prior uncertainty, novelty bonus]
     array[nH] vector<lower=0>[1] sigma;  //[prior uncertainty, novelty bonus]
 
-    // Individual parameters (Non-centered)
-    // array[nS] real Q_0_raw; //prior mean
+    // Individual parameters
     array[nS] real<lower=1, upper=10> Q_0; //prior mean
 
+    // (Non-centered)
     array[nH, nS] real sigma_0_raw; //prior uncertainty
     
 }
@@ -67,10 +66,6 @@ transformed parameters{
 
     array[nH, nS] real sigma_0; //prior uncertainty  
     
-    // for (s_idx in 1:nS) {
-    //     Q_0[s_idx] = mu_Q_0 + sigma_Q_0 * Q_0_raw[s_idx];
-    // }
-
     for (h_idx in 1:nH){
         for (s_idx in 1:nS){
             sigma_0[h_idx, s_idx] = Phi_approx(mu_p[h_idx][1] + sigma[h_idx][1] *sigma_0_raw[h_idx, s_idx])*5.99 + 0.01; //boundary: (0.01, 6)

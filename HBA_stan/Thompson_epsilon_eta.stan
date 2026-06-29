@@ -36,7 +36,6 @@ data {
 
 }
 
-// A-matrix for thompson sampling
 transformed data {
 
    vector[3] tau_S;
@@ -51,15 +50,15 @@ parameters{
     real<lower=0> sigma_Q_0; //[prior mean] (fixed across horizon)
     
     // vectorizing group parameters which varies across horizon
-    array[nH] vector[3] mu_p; //[prior uncertainty, novelty bonus, value-free random]
+    array[nH] vector[3] mu_pr; //[prior uncertainty, novelty bonus, value-free random]
     array[nH] vector<lower=0>[3] sigma;  //[prior uncertainty, novelty bonus, value-free random]
 
-    // Individual parameters (Non-centered)
-    // array[nS] real Q_0_raw; //prior mean
+    // Individual parameters
     array[nS] real<lower=1, upper=10> Q_0; //prior mean
 
+    // (Non-centered)
     array[nH, nS] real sigma_0_raw; //prior uncertainty
-        
+
     array[nH, nS] real eta_raw; //novelty bonus
     
     array[nH, nS] real epsilon_raw; //value-free random exploration
@@ -74,16 +73,12 @@ transformed parameters{
     array[nH, nS] real eta; //novelty bonus
     
     array[nH, nS] real epsilon; //value-free random exploration
-    
-    // for (s_idx in 1:nS) {
-    //     Q_0[s_idx] = mu_Q_0 + sigma_Q_0 * Q_0_raw[s_idx];
-    // }
 
     for (h_idx in 1:nH){
         for (s_idx in 1:nS){
-            sigma_0[h_idx, s_idx] = Phi_approx(mu_p[h_idx][1] + sigma[h_idx][1] *sigma_0_raw[h_idx, s_idx])*5.99 + 0.01; //boundary: (0.01, 6)
-            eta[h_idx, s_idx] = Phi_approx(mu_p[h_idx][2] + sigma[h_idx][2]*eta_raw[h_idx, s_idx])*5; //boundary: (0, 5)
-            epsilon[h_idx, s_idx] = Phi_approx(mu_p[h_idx][3] + sigma[h_idx][3]*epsilon_raw[h_idx, s_idx])*0.5; //boundary: (0, 0.5) 
+            sigma_0[h_idx, s_idx] = Phi_approx(mu_pr[h_idx][1] + sigma[h_idx][1] *sigma_0_raw[h_idx, s_idx])*5.99 + 0.01; //boundary: (0.01, 6)
+            eta[h_idx, s_idx] = Phi_approx(mu_pr[h_idx][2] + sigma[h_idx][2]*eta_raw[h_idx, s_idx])*5; //boundary: (0, 5)
+            epsilon[h_idx, s_idx] = Phi_approx(mu_pr[h_idx][3] + sigma[h_idx][3]*epsilon_raw[h_idx, s_idx])*0.5; //boundary: (0, 0.5) 
         }
     }
 
@@ -101,7 +96,7 @@ model{
 
     for (h_idx in 1:nH) {
 
-        mu_p[h_idx] ~ normal(0, 1);
+        mu_pr[h_idx] ~ normal(0, 1);
         sigma[h_idx] ~ normal(0, 1);
 
         for (s_idx in 1:nS) {
@@ -127,7 +122,7 @@ model{
                 
                 //compute Q and sigma at the first choice trial using closed-form kalman filter
                 tau_n = tau_0 + n_obs[h_idx, s_idx, bt_idx] .* tau_S;
-                Q_n = (tau_0.*Q_0[s_idx] + tau_S.* r_sum[h_idx, s_idx, bt_idx])./(tau_0 + tau_S.* n_obs[h_idx, s_idx, bt_idx]);
+                Q_n = (tau_0.*Q_0[s_idx] + tau_S.* r_sum[h_idx, s_idx, bt_idx])./tau_n;
                 sigma_n = inv_sqrt(tau_n);
                 
                 //compute V by adding novelty bonus
@@ -183,9 +178,9 @@ generated quantities{
 
     for (h_idx in 1:nH){
 
-        mu_sigma_0[h_idx] = Phi_approx(mu_p[h_idx][1])*5.99+0.01;
-        mu_eta[h_idx] = Phi_approx(mu_p[h_idx][2])*5;
-        mu_epsilon[h_idx] = Phi_approx(mu_p[h_idx][3])*0.5;
+        mu_sigma_0[h_idx] = Phi_approx(mu_pr[h_idx][1])*5.99+0.01;
+        mu_eta[h_idx] = Phi_approx(mu_pr[h_idx][2])*5;
+        mu_epsilon[h_idx] = Phi_approx(mu_pr[h_idx][3])*0.5;
 
     }
 
@@ -210,14 +205,14 @@ generated quantities{
                 
                 //compute Q and sigma at the first choice trial using closed-form kalman filter
                 tau_n = tau_0 + n_obs[h_idx, s_idx, bt_idx] .* tau_S;
-                Q_n = (tau_0.*Q_0[s_idx] + tau_S.* r_sum[h_idx, s_idx, bt_idx])./(tau_0 + tau_S.* n_obs[h_idx, s_idx, bt_idx]);
+                Q_n = (tau_0.*Q_0[s_idx] + tau_S.* r_sum[h_idx, s_idx, bt_idx])./tau_n;
                 sigma_n = inv_sqrt(tau_n);
                 
                 //compute V by adding novelty bonus
                 V_n = Q_n + eta[h_idx, s_idx] .* novelty[h_idx, s_idx, bt_idx];
 
                 // Thompson sampling
-                // Although the original code from Dubois & Hauser (2022) used "A matrix", repeating matrix computation for all bandit makes HMC really slow.
+                // Although the original code from Dubois & Hauser (2022) used "A matrix", repeating matrix computation for all bandit may make HMC slow.
                 // Instead, manually compute choice probability for each bandit
                 vector[3] sq_sigma = square(sigma_n);
 

@@ -36,7 +36,6 @@ data {
 
 }
 
-// A-matrix for thompson sampling
 transformed data {
 
    vector[3] tau_S;
@@ -54,12 +53,12 @@ parameters{
     array[nH] vector[2] mu_p; //[prior uncertainty, novelty bonus, value-free random]
     array[nH] vector<lower=0>[2] sigma;  //[prior uncertainty, novelty bonus, value-free random]
 
-    // Individual parameters (Non-centered)
-    // array[nS] real Q_0_raw; //prior mean
+    // Individual parameters
     array[nS] real<lower=1, upper=10> Q_0; //prior mean
 
+    // (Non-centered)
     array[nH, nS] real sigma_0_raw; //prior uncertainty
-        
+
     array[nH, nS] real eta_raw; //novelty bonus
     
 }
@@ -70,10 +69,6 @@ transformed parameters{
     array[nH, nS] real sigma_0; //prior uncertainty
         
     array[nH, nS] real eta; //novelty bonus
-    
-    // for (s_idx in 1:nS) {
-    //     Q_0[s_idx] = mu_Q_0 + sigma_Q_0 * Q_0_raw[s_idx];
-    // }
 
     for (h_idx in 1:nH){
         for (s_idx in 1:nS){
@@ -197,7 +192,7 @@ generated quantities{
                 
                 //compute Q and sigma at the first choice trial using closed-form kalman filter
                 tau_n = tau_0 + n_obs[h_idx, s_idx, bt_idx] .* tau_S;
-                Q_n = (tau_0.*Q_0[s_idx] + tau_S.* r_sum[h_idx, s_idx, bt_idx])./(tau_0 + tau_S.* n_obs[h_idx, s_idx, bt_idx]);
+                Q_n = (tau_0.*Q_0[s_idx] + tau_S.* r_sum[h_idx, s_idx, bt_idx])./tau_n;
                 sigma_n = inv_sqrt(tau_n);
                 
                 //compute V by adding novelty bonus

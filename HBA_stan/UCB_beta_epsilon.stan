@@ -28,11 +28,10 @@ parameters{
     array[nH] vector[3] mu_p; //[information bonus, inverse temperature, novelty bonus, value-free random]
     array[nH] vector<lower=0>[3] sigma;  //[information bonus, inverse temperature, novelty bonus, value-free random]
 
-    // Individual parameters (Non-centered)
-    // array[nS] real Q_0_raw; //prior mean
-
+    // Individual parameters
     array[nS] real<lower=1, upper=10> Q_0; //prior mean
 
+    // (Non-centered)
     array[nH, nS] real gamma_raw; //information bonus
     
     array[nH, nS] real beta_raw; //inverse temperature
@@ -44,17 +43,11 @@ parameters{
 //Matt's Trick
 transformed parameters{
 
-    // array[nS] real<lower=1, upper=10> Q_0; //prior mean
-
     array[nH, nS] real gamma; //information bonus
     
     array[nH, nS] real beta; //inverse temperature
 
     array[nH, nS] real epsilon; //value-free random exploration
-    
-    // for (s_idx in 1:nS) {
-    //     Q_0[s_idx] = mu_Q_0+ sigma_Q_0 * Q_0_raw[s_idx];
-    // }
 
     for (h_idx in 1:nH){
         for (s_idx in 1:nS){
@@ -101,7 +94,7 @@ model{
 
                 //compute Q and sigma at the first choice trial using closed-form kalman filter
                 tau_n = tau_0 + n_obs[h_idx, s_idx, bt_idx] .* tau_S;
-                Q_n = (tau_0.*Q_0[s_idx] + tau_S.* r_sum[h_idx, s_idx, bt_idx])./(tau_0 + tau_S.* n_obs[h_idx, s_idx, bt_idx]);
+                Q_n = (tau_0.*Q_0[s_idx] + tau_S.* r_sum[h_idx, s_idx, bt_idx])./tau_n;
                 sigma_n = inv_sqrt(tau_n);
                 
                 //compute V by adding information bonus and novelty bonus
@@ -148,7 +141,7 @@ generated quantities{
 
                 //compute Q and sigma at the first choice trial using closed-form kalman filter
                 tau_n = tau_0 + n_obs[h_idx, s_idx, bt_idx] .* tau_S;
-                Q_n = (tau_0.*Q_0[s_idx] + tau_S.* r_sum[h_idx, s_idx, bt_idx])./(tau_0 + tau_S.* n_obs[h_idx, s_idx, bt_idx]);
+                Q_n = (tau_0.*Q_0[s_idx] + tau_S.* r_sum[h_idx, s_idx, bt_idx])./tau_n;
                 sigma_n = inv_sqrt(tau_n);
                 
                 //compute V by adding information bonus and novelty bonus
