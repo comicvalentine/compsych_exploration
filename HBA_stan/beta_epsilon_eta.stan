@@ -28,11 +28,10 @@ parameters{
     array[nH] vector[3] mu_p; //[information bonus, inverse temperature, novelty bonus, value-free random]
     array[nH] vector<lower=0>[3] sigma;  //[information bonus, inverse temperature, novelty bonus, value-free random]
 
-    // Individual parameters (Non-centered)
-    // array[nS] real Q_0_raw; //prior mean
-
+    // Individual parameters
     array[nS] real<lower=1, upper=10> Q_0; //prior mean
 
+    // (Non-centered)
     array[nH, nS] real beta_raw; //inverse temperature
     
     array[nH, nS] real eta_raw; //novelty bonus
@@ -44,17 +43,11 @@ parameters{
 //Matt's Trick
 transformed parameters{
 
-    // array[nS] real<lower=1, upper=10> Q_0; //prior mean
-
     array[nH, nS] real beta; //inverse temperature
     
     array[nH, nS] real eta; //novelty bonus
     
     array[nH, nS] real epsilon; //value-free random exploration
-    
-    // for (s_idx in 1:nS) {
-    //     Q_0[s_idx] = mu_Q_0+ sigma_Q_0 * Q_0_raw[s_idx];
-    // }
 
     for (h_idx in 1:nH){
         for (s_idx in 1:nS){
@@ -131,8 +124,12 @@ generated quantities{
         mu_epsilon[h_idx] = Phi_approx(mu_p[h_idx][3])*0.5;
     }
 
+   // For log likelihood calculation
     array[nH, nS, nBT] real log_lik;
     
+    // For posterior predictive check
+    array[nH, nS, nBT] real y_pred;
+
     for (h_idx in 1:nH) {
 
         for (s_idx in 1:nS) {
@@ -157,6 +154,8 @@ generated quantities{
                 P_softmax = softmax(beta[h_idx, s_idx]*V_n);
                 P_final = (1-epsilon[h_idx, s_idx])*P_softmax + rep_vector(epsilon[h_idx, s_idx]/3.0, 3);
                 log_lik[h_idx, s_idx, bt_idx] = categorical_lpmf(fst_chos[h_idx, s_idx, bt_idx] | P_final);
+                y_pred[h_idx, s_idx, bt_idx] = categorical_rng(P_final);
+
             }
 
         }

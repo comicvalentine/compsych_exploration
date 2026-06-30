@@ -133,8 +133,12 @@ generated quantities{
         mu_epsilon[h_idx] = Phi_approx(mu_p[h_idx][4])*0.5;
     }
 
+   // For log likelihood calculation
     array[nH, nS, nBT] real log_lik;
     
+    // For posterior predictive check
+    array[nH, nS, nBT] real y_pred;
+
     for (h_idx in 1:nH) {
 
         for (s_idx in 1:nS) {
@@ -159,6 +163,8 @@ generated quantities{
                 P_softmax = softmax(beta[h_idx, s_idx]*V_n);
                 P_final = (1-epsilon[h_idx, s_idx])*P_softmax + rep_vector(epsilon[h_idx, s_idx]/3.0, 3);
                 log_lik[h_idx, s_idx, bt_idx] = categorical_lpmf(fst_chos[h_idx, s_idx, bt_idx] | P_final);
+                y_pred[h_idx, s_idx, bt_idx] = categorical_rng(P_final);
+
             }
 
         }

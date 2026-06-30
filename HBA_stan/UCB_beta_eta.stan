@@ -122,8 +122,12 @@ generated quantities{
         mu_eta[h_idx] = Phi_approx(mu_p[h_idx][3])*5;
     }
 
+   // For log likelihood calculation
     array[nH, nS, nBT] real log_lik;
     
+    // For posterior predictive check
+    array[nH, nS, nBT] real y_pred;
+
     for (h_idx in 1:nH) {
 
         for (s_idx in 1:nS) {
@@ -146,6 +150,8 @@ generated quantities{
                 //Probability: value-based(softmax with inverse temperature)
                 P_softmax = softmax(beta[h_idx, s_idx]*V_n);
                 log_lik[h_idx, s_idx, bt_idx] = categorical_lpmf(fst_chos[h_idx, s_idx, bt_idx] | P_softmax);
+                y_pred[h_idx, s_idx, bt_idx] = categorical_rng(P_softmax);
+
             }
 
         }

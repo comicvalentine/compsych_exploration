@@ -172,8 +172,12 @@ generated quantities{
         mu_eta[h_idx] = Phi_approx(mu_p[h_idx][2])*5;
     }
 
+   // For log likelihood calculation
     array[nH, nS, nBT] real log_lik;
     
+    // For posterior predictive check
+    array[nH, nS, nBT] real y_pred;
+   
     for (h_idx in 1:nH) {
 
         for (s_idx in 1:nS) {
@@ -232,6 +236,8 @@ generated quantities{
 
                 P_n = P_n_raw/sum(P_n_raw);
                 log_lik[h_idx, s_idx, bt_idx] = categorical_lpmf(fst_chos[h_idx, s_idx, bt_idx] | P_n);
+                y_pred[h_idx, s_idx, bt_idx] = categorical_rng(P_n);
+
             }
 
         }
